@@ -23,7 +23,7 @@ This project provides a containerized environment for ergonomic assessment throu
 nvidia-smi
 
 # Test Docker GPU access
-sudo docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi
+sudo docker run --rm --gpus all nvcr.io/nvidia/pytorch:22.03-py3 nvidia-smi
 ```
 
 ## Project Structure
@@ -78,9 +78,14 @@ sudo docker run --rm -it --gpus all \
 ### Option 3: Using Base NVIDIA Image Directly
 
 ```bash
-# Run directly with the NVIDIA PyTorch base image
+# Run directly with the NVIDIA PyTorch base image (with specific mounts for security)
 sudo docker run --rm -it --gpus all \
-    -v $(pwd):/workspace \
+    -v $(pwd)/mmpose:/workspace/mmpose \
+    -v $(pwd)/motionbert:/workspace/motionbert \
+    -v $(pwd)/3D-angle:/workspace/3D-angle \
+    -v $(pwd)/dataset:/workspace/dataset \
+    -v $(pwd)/models:/workspace/models \
+    -w /workspace \
     nvcr.io/nvidia/pytorch:22.03-py3
 ```
 
@@ -159,8 +164,10 @@ environment:
 ```bash
 # Ensure NVIDIA Container Toolkit is installed
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 ```
