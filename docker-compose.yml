@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  vision-ergo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vision-ergo-assessment:latest
+    container_name: vision-ergo-assessment
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    volumes:
+      # Mount source code directories
+      - ./mmpose:/workspace/mmpose
+      - ./motionbert:/workspace/motionbert
+      - ./3D-angle:/workspace/3D-angle
+      # Mount data directories for persistence
+      - ./dataset:/workspace/dataset
+      - ./models:/workspace/models
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    # Optional: expose ports if needed for web interfaces
+    # ports:
+    #   - "8888:8888"  # Jupyter notebook
+    #   - "6006:6006"  # TensorBoard
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
